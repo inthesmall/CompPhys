@@ -3,10 +3,14 @@ import matplotlib.pyplot as plt
 
 
 def gen(n):
-    return [math.sin(i / 10) for i in range(n)]
+    """Returns the x_i, f_i as a tuple of lists"""
+    xi = [i/10 for i in range(n)]
+    fi = [math.sin(i) for i in xi]
+    return xi, fi
 
 
-def inter(fi, x):
+def inter(x, *args):
+    """Polynomial interpolation"""
     total = 0
     for i in range(len(fi)):
         prod = 1
