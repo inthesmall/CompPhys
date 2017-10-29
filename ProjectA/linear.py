@@ -9,5 +9,5 @@ def linint(xs, ys, x):
             raise err
     if i == -1:
         raise ValueError("x is not in range of data")
-    return ((xs[i + 1] - x) * ys[i] + (x - xs[i]) * ys[i + 1]) /
-    (xs[i + 1] - xs[i])
+    return (((xs[i + 1] - x) * ys[i] + (x - xs[i]) * ys[i + 1]) /
+            (xs[i + 1] - xs[i]))
