@@ -2,8 +2,11 @@ import numpy as np
 
 
 def LU(M):
+    # Not sure if this is Crout's method or Doolittle's
     M = M.copy()
+    # P is permutation matrix. n is +/- 1 depending on number of swaps made
     P, n = pivot(M)
+    # We decompose a row-wise permutation of the original matrix
     M = P * M
     for j in range(len(M)):
         for i in range(j + 1):
@@ -18,6 +21,8 @@ def LU(M):
                 mij -= M[i, k] * M[k, j]
             mij /= M[j, j]
             M[i, j] = mij
+    # We end up with M being a combined matrix, which we need to split
+    # into L and U
     return P, n, Lower(M), Upper(M)
 
 
