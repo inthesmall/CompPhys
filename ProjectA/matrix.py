@@ -64,7 +64,7 @@ def check_unused(col, M, used, P):
     entries = []
     # find any unused rows that have a non-zero entry for col
     for row in [i for i in range(len(M)) if i not in used and
-                M[i, col] != 0]:
+                    M[i, col] != 0]:
         entries.append((M[row, col], row))
     if not entries:
         # give up if there aren't any suitable
@@ -112,14 +112,14 @@ def repivot_used(col, M, used, P):
 
 def det_P(v):
     n = 1
-    n *= (-1)**v[0]
+    n *= (-1) ** v[0]
 
     for i, vi in enumerate(v[1:-1]):
         viold = vi
         for vj in v[:i + 1]:
             if vj < viold:
                 vi -= 1
-        n *= (-1)**vi
+        n *= (-1) ** vi
     return n
 
 
@@ -164,19 +164,20 @@ def fb_sub(L: np.matrix, U: np.matrix, P: np.array, b: np.array) -> np.array:
             array containing the solutions to the simultaneous equations
     """
     # forward substitution for y:
+    b = P * b
     y = [b[0] / L[0, 0]]
     for i in range(1, len(b)):
         yi = b[i]
-        for j in range(i-1):
+        for j in range(i - 1):
             yi -= L[i, j] * y[j]
-        yi /=L[i, i]
+        yi /= L[i, i]
         y.append(yi)
 
     # back substitution for x:
     N = len(b)
     x = np.zeros(N, dtype='float')
     x[N] = y[N] / U[N, N]
-    for i in range(N-1, -1, -1):
+    for i in range(N - 1, -1, -1):
         xi = y[i]
         for j in range(N, i, -1):
             xi -= U[i, j] * x[j]
