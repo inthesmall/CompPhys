@@ -2,10 +2,30 @@ import numpy as np
 
 
 def LU(M):
-    # Not sure if this is Crout's method or Doolittle's
+    """
+    Decompose a square matrix M into upper and lower triangular matrices
+
+    Implements Crout's method of LU decomposition with partial pivoting to
+    decompose a matrix M such that L * U = P * M, where P is the permutation
+    matrix. Also returns n as either -1 or 1 and is the determinant of P.
+
+    Params:
+        M: np.matrix of ints or floats. Square
+            Matrix to be decomposed
+
+    Returns:
+        P: np.matrix of ints. Square
+            Permutation matrix
+        n: int. -1 or 1
+            Determinant of P
+        L: np.matrix of floats. Square
+            Lower triangular matrix. Unity along the diagonal
+        U: np.matrix of floats. Square
+            Upper triangular matrix
+    """
     M = M.copy()
     # P is permutation matrix. n is +/- 1 depending on number of swaps made
-    P, n = pivot(M)
+    P, n = _pivot(M)
     # We decompose a row-wise permutation of the original matrix
     M = P * M
     for j in range(len(M)):
@@ -21,18 +41,21 @@ def LU(M):
                 mij -= M[i, k] * M[k, j]
             mij /= M[j, j]
             M[i, j] = mij
-    # We end up with M being a combined matrix, which we need to split
+    # We decompose M in-place since this is faster and less memory-intensive
+    # so we end up with M being a combined matrix, which we need to split
     # into L and U
-    return P, n, Lower(M), Upper(M)
+    return P, n, _Lower(M), _Upper(M)
 
 
-def Lower(LU):
+def _Lower(LU):
+    # Find the lower matrix from the combined matrix
     n = len(LU)
     return np.reshape(np.matrix([((LU[i, j], 0)[i < j], 1)[i == j]
                                  for i in range(n) for j in range(n)]), (n, n))
 
 
-def Upper(LU):
+def _Upper(LU):
+    # Find the upper matrix from the combined matrix
     n = len(LU)
     return np.reshape(np.matrix([(LU[i, j], 0)[i > j]
                                  for i in range(n) for j in range(n)]), (n, n))
@@ -45,26 +68,26 @@ def LU_det(n, U):
     return det
 
 
-def pivot(M):
+def _pivot(M):
     # store used rows
     used = []
     # Permutations
     P = []
     for col in range(len(M)):
-        if check_unused(col, M, used, P):
+        if _check_unused(col, M, used, P):
             continue
-        elif repivot_used(col, M, used, P):
+        elif _repivot_used(col, M, used, P):
             continue
         else:
             raise ValueError("Col of 0's!")
-    return matrix_P(P), det_P(P)
+    return _matrix_P(P), _det_P(P)
 
 
-def check_unused(col, M, used, P):
+def _check_unused(col, M, used, P):
     entries = []
     # find any unused rows that have a non-zero entry for col
     for row in [i for i in range(len(M)) if i not in used and
-                    M[i, col] != 0]:
+                M[i, col] != 0]:
         entries.append((M[row, col], row))
     if not entries:
         # give up if there aren't any suitable
@@ -79,7 +102,7 @@ def check_unused(col, M, used, P):
     return True
 
 
-def repivot_used(col, M, used, P):
+def _repivot_used(col, M, used, P):
     entries = []
     # find all the rows in used with a non-zero entry for col
     # apart from the row which is already being used for col
@@ -90,7 +113,7 @@ def repivot_used(col, M, used, P):
     for entry in entries:
         used_col = P.index(entry[1])
         # See if you can replace the used row with an unused one
-        if check_unused(used_col, M, used, P):
+        if _check_unused(used_col, M, used, P):
             try:
                 P[col] = entry[1]
             except IndexError:
@@ -100,7 +123,7 @@ def repivot_used(col, M, used, P):
         # See if we can use another used row to replace the one we want
         for entry in entries:
             used_col = P.index(entry[1])
-            if repivot_used(used_col, M, used, P):
+            if _repivot_used(used_col, M, used, P):
                 try:
                     P[col] = entry[1]
                 except IndexError:
@@ -110,7 +133,7 @@ def repivot_used(col, M, used, P):
             return False
 
 
-def det_P(v):
+def _det_P(v):
     n = 1
     n *= (-1) ** v[0]
 
@@ -123,22 +146,13 @@ def det_P(v):
     return n
 
 
-def matrix_P(P: list) -> np.matrix:
-    """
-    Create a permutation matrix from an ordered list of row numbers
-
-    Params:
-        P: list of row numbers of the identity matrix in the order they are to
-            appear in the permutation matrix
-
-    Returns:
-        A row-wise permutation of the identity matrix as a numpy matrix
-    """
+def _matrix_P(P):
+    # Create a permutation matrix from an ordered list of row numbers
     return np.matrix([[(0, 1)[i == P[n]] for i in range(len(P))]
                       for n in range(len(P))])
 
 
-def fb_sub(L: np.matrix, U: np.matrix, P: np.array, b: np.array) -> np.array:
+def fb_sub(L, U, P, b):
     """
     Performs forward- and back-substitution to solve simultaneous equations
 
@@ -156,26 +170,36 @@ def fb_sub(L: np.matrix, U: np.matrix, P: np.array, b: np.array) -> np.array:
         P: np.matrix of ints. Square row-wise permutation of the identity
             Permutation matrix from LU decomposition. From LU(M) or pivot(M)
         b: np.array of ints or floats
-            array containing the right hand side vector of the simultaneous
-            equation
+            column vector containing the right hand side vector of the
+            simultaneous equation
 
     Returns:
         x: np.array of floats
             array containing the solutions to the simultaneous equations
     """
-    # forward substitution for y:
+    # Cast input to floats
+    L = L.astype(float)
+    U = U.astype(float)
+    b = b.astype(float)
+    # attempt to make b into a column vector if provided as a row vector.
+    try:
+        if b.shape[1] != 1:
+            b = b.reshape(len(b), 1)
+    except IndexError:
+        b = b.reshape(len(b), 1)
+    # permute b to match L and U
     b = P * b
+    # forward substitution for y:
     y = [b[0] / L[0, 0]]
     for i in range(1, len(b)):
         yi = b[i]
-        for j in range(i - 1):
+        for j in range(i):
             yi -= L[i, j] * y[j]
         yi /= L[i, i]
         y.append(yi)
-
     # back substitution for x:
-    N = len(b)
-    x = np.zeros(N, dtype='float')
+    N = len(b) - 1
+    x = np.zeros(N + 1, dtype='float')
     x[N] = y[N] / U[N, N]
     for i in range(N - 1, -1, -1):
         xi = y[i]
