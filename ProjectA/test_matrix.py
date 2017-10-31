@@ -1,6 +1,7 @@
-import unittest
-import numpy as np
 import matrix
+import numpy as np
+import scipy.linalg as scl
+import unittest
 
 
 class EdgeCase(unittest.TestCase):
@@ -35,4 +36,15 @@ class Simul(unittest.TestCase):
     def test_simul_solve(self):
         self.assertFalse(
             (matrix.fb_sub(self.L, self.U, self.P, self.b) -
-                np.array([7., -2.])).any())
+                np.array([[7.], [-2.]])).any())
+
+
+class GeneralSimul(unittest.TestCase):
+    def test_general_simul_solve(self):
+        for i in range(1, 11):
+            M = np.matrix(np.random.random(size=(i, i)))
+            b = np.random.random(size=(i, 1))
+            P, n, L, U = matrix.LU(M)
+            x = matrix.fb_sub(L, U, P, b)
+            x_true = np.matrix(scl.inv(M)) * b
+            self.assertTrue(((x - x_true) < 1e-10).all())
