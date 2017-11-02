@@ -23,6 +23,8 @@ def LU(M):
         U: np.matrix of floats. Square
             Upper triangular matrix
     """
+    # The algorithm used decomposed M inplace, but I try to write function with
+    # minimal side effects. Therefore create a copy of M
     M = M.copy()
     # P is permutation matrix. n is +/- 1 depending on number of swaps made
     P, n = _pivot(M)
@@ -30,15 +32,19 @@ def LU(M):
     M = P * M
     for j in range(len(M)):
         for i in range(j + 1):
+            # Here we calculate each element of the upper matrix
             mij = M[i, j]
             if i != 0:
                 for k in range(0, i):
                     mij -= M[i, k] * M[k, j]
+            # Then overwrite the entry in the original matrix
             M[i, j] = mij
         for i in range(j + 1, len(M)):
+            # Calculate the entries in the lower matirx
             mij = M[i, j]
             for k in range(j):
                 mij -= M[i, k] * M[k, j]
+            # Normalize to make the lower matrix unity along the diagonal
             mij /= M[j, j]
             M[i, j] = mij
     # We decompose M in-place since this is faster and less memory-intensive
@@ -62,6 +68,17 @@ def _Upper(LU):
 
 
 def LU_det(n, U):
+    """Calculate the determinant from the trace of the upper diagonal matrix
+
+    Params:
+        n: int. -1 or 1
+            Determinant of permutation matrix
+        U: Upper diagonal matrix from LU()
+
+    Returns:
+        det: float
+            trace of U multiplied by n
+    """
     det = n
     for i in range(len(U)):
         det *= U[i, i]
@@ -69,6 +86,9 @@ def LU_det(n, U):
 
 
 def _pivot(M):
+    # Row-wise permutation to maximise the leading diagonal of *M* while
+    # ensuring there are no 0's on the diagonal
+    
     # store used rows
     used = []
     # Permutations
@@ -96,29 +116,36 @@ def _check_unused(col, M, used, P):
     # Choose the biggest entry and put it in the appropriate places
     used.append(entries[0][1])
     try:
+        # If it is replacing an existing entry
         P[col] = entries[0][1]
     except IndexError:
+        # If it is at the end of the new matrix
         P.append(entries[0][1])
     return True
 
 
 def _repivot_used(col, M, used, P):
     entries = []
-    # find all the rows in used with a non-zero entry for col
-    # apart from the row which is already being used for col
+    # find all the rows in *used* with a non-zero entry for column *col*
+    # apart from the row which is already being used for *col*
     for row in used:
         if M[row, col] != 0 and P.index(row) != col:
             entries.append((M[row, col], row))
+    # sort them by their value for *col* to check the most preferable values
+    # first
     entries.sort(reverse=True)
     for entry in entries:
         used_col = P.index(entry[1])
         # See if you can replace the used row with an unused one
         if _check_unused(used_col, M, used, P):
+            # If you have freed up the used row, you can use it where it was
+            # needed
             try:
                 P[col] = entry[1]
             except IndexError:
                 P.append(entry[1])
             return True
+    # If the used row can't be replaced by an unused row
     else:
         # See if we can use another used row to replace the one we want
         for entry in entries:
@@ -199,12 +226,35 @@ def fb_sub(L, U, P, b):
         y.append(yi)
     # back substitution for x:
     N = len(b) - 1
-    x = np.zeros(N + 1, dtype='float')
-    x[N] = y[N] / U[N, N]
+    x = np.zeros((N + 1, 1), dtype='float')
+    x[N, 0] = y[N] / U[N, N]
     for i in range(N - 1, -1, -1):
         xi = y[i]
         for j in range(N, i, -1):
             xi -= U[i, j] * x[j]
         xi /= U[i, i]
-        x[i] = xi
+        x[i, 0] = xi
+    return x
+
+
+def simul_solve(M, b):
+    """Helper function to solve simultaenous equations in matrix form
+
+    Does not implement any new functionality, but rather takes the work
+    out of solving equtations by calling the appropritate functions for you.
+    Solves equations of the form M x = b for x.
+
+    Params:
+        M: np.matrix of ints or floats. Square (n, n)
+            Coeffecients of variables in x in simultaenous equation
+        b: np.array of ints of floats. Should have shape = (n, 1)
+            Right-hand-side of equations.
+
+    Returns:
+        x: np.array of floats. Shape = (n, 1)
+            Values of variables which solve simultaneous equations
+    """
+    M = M.astype(float)
+    P, n, L, U = LU(M)
+    x = fb_sub(L, U, P, b)
     return x
