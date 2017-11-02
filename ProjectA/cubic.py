@@ -31,6 +31,41 @@ def _spline(xs, ys):
     return ypp
 
 
+# @cache()
+
+def _A(x, xs, i):
+    return (xs[i + 1] - x) / (xs[i + 1] - xs[i])
+
+
+# @cache()
+def _C(x, xs, i, A):
+    return ((A**3 - A) * (xs[i + 1] - xs[i])**2) / 6.
+
+
 def spline_inter(x, xs, ys):
+    if x in xs:
+        return ys[xs.index(x)]
+
     ypp = _spline(xs, ys)
-    return y
+
+    try:
+        i = [i >= x for i in xs].index(True) - 1
+    except ValueError as err:
+        if err.args[0] == "True is not in list":
+            raise ValueError("x is not in range of data") from err
+        else:
+            raise err
+    if i == -1:
+        raise ValueError("x is not in range of data")
+
+    A = _A(x, xs, i)
+    B = 1 - A
+    C = _C(x, xs, i, A)
+    D = _C(x, xs, i, B)
+
+    if i == 0:
+        return A * ys[0] + B * ys[1] + D * ypp[0]
+    elif i == len(xs) - 2:
+        return A * ys[-2] + B * ys[-1] + C * ypp[-1]
+    else:
+        return A * ys[i] + B * ys[i + 1] + C * ypp[i - 1] + D * ypp[i]
