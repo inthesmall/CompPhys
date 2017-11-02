@@ -21,7 +21,7 @@ class EdgeCase(unittest.TestCase):
         self.assertEqual(-1, self.n)
 
 
-class Simul(unittest.TestCase):
+class Simulfbsub(unittest.TestCase):
     def setUp(self):
         self.M = np.matrix('1 2; 1 1')
         self.b = np.array([[3], [5]])
@@ -39,12 +39,22 @@ class Simul(unittest.TestCase):
                 np.array([[7.], [-2.]])).any())
 
 
-class GeneralSimul(unittest.TestCase):
-    def test_general_simul_solve(self):
+class GeneralSimulfbsub(unittest.TestCase):
+    def test_general_simul_solve_fbsub(self):
         for i in range(1, 11):
             M = np.matrix(np.random.random(size=(i, i)))
             b = np.random.random(size=(i, 1))
             P, n, L, U = matrix.LU(M)
             x = matrix.fb_sub(L, U, P, b)
+            x_true = np.matrix(scl.inv(M)) * b
+            self.assertTrue(((x - x_true) < 1e-10).all())
+
+
+class General_simulsolve(unittest.TestCase):
+    def test_general_simul_solve(self):
+        for i in range(1, 11):
+            M = np.matrix(np.random.random(size=(i, i)))
+            b = np.random.random(size=(i, 1))
+            x = matrix.simul_solve(M, b)
             x_true = np.matrix(scl.inv(M)) * b
             self.assertTrue(((x - x_true) < 1e-10).all())
