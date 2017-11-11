@@ -1,7 +1,9 @@
-def linint(xs, ys, x):
+def linint(x, xs, ys):
     # find i:
+    if x in xs:
+        return ys[xs.index(x)]
     try:
-        i = [i > x for i in xs].index(True) - 1
+        i = [i >= x for i in xs].index(True) - 1
     except ValueError as err:
         if err.args[0] == "True is not in list":
             raise ValueError("x is not in range of data") from err
