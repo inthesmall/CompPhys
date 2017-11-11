@@ -9,7 +9,7 @@ def test1():
     ys = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     plt.plot(xs, ys, 'ro')
     inter_xs = np.arange(0, 9, 0.1)
-    inter_ys = [linear.linint(xs, ys, x) for x in inter_xs]
+    inter_ys = [linear.linint(x, xs, ys) for x in inter_xs]
     plt.plot(inter_xs, inter_ys, 'b')
     plt.show()
 
@@ -19,7 +19,7 @@ def test2():
     ys = [0, 1, 2, 3, 4, 4.5, 5, 5.5, 6, 6.5]
     plt.plot(xs, ys, 'ro')
     inter_xs = np.arange(0, 9, 0.1)
-    inter_ys = [linear.linint(xs, ys, x) for x in inter_xs]
+    inter_ys = [linear.linint(x, xs, ys) for x in inter_xs]
     plt.plot(inter_xs, inter_ys, 'b')
     plt.show()
 
