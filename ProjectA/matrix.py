@@ -25,7 +25,7 @@ def LU(M):
     """
     # The algorithm used decomposed M inplace, but I try to write function with
     # minimal side effects. Therefore create a copy of M
-    M = M.copy()
+    M = M.astype('float').copy()
     # P is permutation matrix. n is +/- 1 depending on number of swaps made
     P, n = _pivot(M)
     # We decompose a row-wise permutation of the original matrix
@@ -88,7 +88,7 @@ def LU_det(n, U):
 def _pivot(M):
     # Row-wise permutation to maximise the leading diagonal of *M* while
     # ensuring there are no 0's on the diagonal
-    
+
     # store used rows
     used = []
     # Permutations
@@ -161,9 +161,17 @@ def _repivot_used(col, M, used, P):
 
 
 def _det_P(v):
+    # Calculate permutation matrix determinant from a list of integers.
+    # Because of the pivoting implementation, this is easier than keeping
+    # track of the number of swaps
     n = 1
     n *= (-1) ** v[0]
 
+    # This method adapts the general determinant method to take advantage
+    # of the fact that all entries are either one or zero and there is only
+    # one non-zero entry per row.
+    # This performed better than a bubble sort approch in timing tests, and was
+    # further optimzed using line by line timing analysis.
     for i, vi in enumerate(v[1:-1]):
         viold = vi
         for vj in v[:i + 1]:
@@ -237,7 +245,7 @@ def fb_sub(L, U, P, b):
     return x
 
 
-def simul_solve(M, b):
+def simul_solve(M, b, P=None, n=None, L=None, U=None):
     """Helper function to solve simultaenous equations in matrix form
 
     Does not implement any new functionality, but rather takes the work
@@ -254,7 +262,36 @@ def simul_solve(M, b):
         x: np.array of floats. Shape = (n, 1)
             Values of variables which solve simultaneous equations
     """
+    try:
+        if b.shape[1] != 1:
+            b = b.reshape(len(b), 1)
+    except IndexError:
+        b = b.reshape(len(b), 1)
     M = M.astype(float)
-    P, n, L, U = LU(M)
+    if P is None:
+        P, n, L, U = LU(M)
     x = fb_sub(L, U, P, b)
     return x
+
+
+def invert(A):
+    """Finds inverse of matrix A
+
+    Params:
+        A: np.matrix. Sqaure
+
+    Returns:
+        A_inv: np.matrix. Square
+    """
+    A_inv = []
+    P, n, L, U = LU(A)
+    for i in range(len(A)):
+        # ith unit vector
+        b = np.array([(0, 1)[j == i] for j in range(len(A))])
+        # ith column of the inverse
+        A_inv.append(simul_solve(A, b, P, n, L, U).reshape(len(A)))
+    # rearrange things so they're in the right order and make into a matrix
+    A_inv = np.matrix(A_inv).T
+    return A_inv
+
+

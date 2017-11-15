@@ -21,6 +21,16 @@ class EdgeCase(unittest.TestCase):
         self.assertEqual(-1, self.n)
 
 
+class IntTest(unittest.TestCase):
+    def setUp(self):
+        self.A = np.matrix(
+            '2 1 0 0 0 ; 3 8 4 0 0 ; 0 9 20 10 0 ; 0 0 22 51 -25 ; 0 0 0 -55 60')
+        self.P, self.n, self.L, self.U = matrix.LU(self.A)
+
+    def test_matrix_of_ints(self):
+        self.assertTrue((self.L * self.U == self.P * self.A).all())
+
+
 class Simulfbsub(unittest.TestCase):
     def setUp(self):
         self.M = np.matrix('1 2; 1 1')
@@ -28,15 +38,15 @@ class Simulfbsub(unittest.TestCase):
         self.P, self.n, self.L, self.U = matrix.LU(self.M)
 
     def test_simul_LU(self):
-        self.assertFalse(((self.L * self.U) - (self.P * self.M)).any())
+        self.assertTrue(((self.L * self.U) == (self.P * self.M)).all())
 
     def test_simul_P(self):
-        self.assertFalse((self.P - np.matrix('0 1;1 0')).any())
+        self.assertTrue((self.P == np.matrix('0 1;1 0')).all())
 
     def test_simul_solve(self):
-        self.assertFalse(
-            (matrix.fb_sub(self.L, self.U, self.P, self.b) -
-                np.array([[7.], [-2.]])).any())
+        self.assertTrue(
+            (matrix.fb_sub(self.L, self.U, self.P, self.b) ==
+                np.array([[7.], [-2.]])).all())
 
 
 class GeneralSimulfbsub(unittest.TestCase):
