@@ -16,6 +16,9 @@ class Point():
     def __float__(self):
         return float(self.k)
 
+    def update(self, *args):
+        return 0
+
 
 class OutsideEdge(Point):
     def __init__(self, k, q):
@@ -23,12 +26,44 @@ class OutsideEdge(Point):
         self.q = q / 2
 
 
+class LeftEdge(OutsideEdge):
+    def __init__(self, k, q):
+        super().__init__(k, q)
+
+    def update(self, u, j, across=across):
+        return u[j + 1] - (2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3))
+
+
+class RightEdge(OutsideEdge):
+    def __init__(self, k, q):
+        super().__init__(k, q)
+
+    def update(self, u, j, across=across):
+        return u[j - 1] + 2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
+
+
+class TopEdge(OutsideEdge):
+    def __init__(self, k, q):
+        super().__init__(k, q)
+
+    def update(self, u, j, across=across):
+        return u[j + across] - 2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
+
+
+class BottomEdge(OutsideEdge):
+    def __init__(self, k, q):
+        super().__init__(k, q)
+
+    def update(self, u, j, across=across):
+        return u[j - across] + 2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
+
+
 # class LeftEdge(OutsideEdge):
 #     def __init__(self, k, q):
 #         super().__init__(k, q)
 
 #     def update(self, u, j):
-#         return u[j + 1] - (2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3))
+#         return u[j] - (delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3))
 
 
 # class RightEdge(OutsideEdge):
@@ -36,7 +71,7 @@ class OutsideEdge(Point):
 #         super().__init__(k, q)
 
 #     def update(self, u, j):
-#         return u[j - 1] + 2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
+#         return u[j] - delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
 
 
 # class TopEdge(OutsideEdge):
@@ -44,7 +79,7 @@ class OutsideEdge(Point):
 #         super().__init__(k, q)
 
 #     def update(self, u, j):
-#         return u[j + across] - 2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
+#         return u[j] - delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
 
 
 # class BottomEdge(OutsideEdge):
@@ -52,39 +87,7 @@ class OutsideEdge(Point):
 #         super().__init__(k, q)
 
 #     def update(self, u, j):
-#         return u[j - across] + 2 * delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
-
-
-class LeftEdge(OutsideEdge):
-    def __init__(self, k, q):
-        super().__init__(k, q)
-
-    def update(self, u, j):
-        return u[j] - (delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3))
-
-
-class RightEdge(OutsideEdge):
-    def __init__(self, k, q):
-        super().__init__(k, q)
-
-    def update(self, u, j):
-        return u[j] - delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
-
-
-class TopEdge(OutsideEdge):
-    def __init__(self, k, q):
-        super().__init__(k, q)
-
-    def update(self, u, j):
-        return u[j] - delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
-
-
-class BottomEdge(OutsideEdge):
-    def __init__(self, k, q):
-        super().__init__(k, q)
-
-    def update(self, u, j):
-        return u[j] - delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
+#         return u[j] - delta * 1.31E-6 * (u[j] - 293.15)**(4 / 3)
 
 
 class Corner(OutsideEdge):
@@ -97,32 +100,36 @@ class TopLeftCorner(Corner):
     def __init__(self, k, q):
         super().__init__(k, q)
 
-    def update(self, u, j):
-        return (TopEdge.update(self, u, j) + LeftEdge.update(self, u, j))
+    def update(self, u, j, across=across):
+        return (TopEdge.update(self, u, j, across) +
+                LeftEdge.update(self, u, j, across))
 
 
 class TopRightCorner(Corner):
     def __init__(self, k, q):
         super().__init__(k, q)
 
-    def update(self, u, j):
-        return (TopEdge.update(self, u, j) + RightEdge.update(self, u, j))
+    def update(self, u, j, across=across):
+        return (TopEdge.update(self, u, j, across) +
+                RightEdge.update(self, u, j, across))
 
 
 class BottomLeftCorner(Corner):
     def __init__(self, k, q):
         super().__init__(k, q)
 
-    def update(self, u, j):
-        return (BottomEdge.update(self, u, j) + LeftEdge.update(self, u, j))
+    def update(self, u, j, across=across):
+        return (BottomEdge.update(self, u, j, across) +
+                LeftEdge.update(self, u, j, across))
 
 
 class BottomRightCorner(Corner):
     def __init__(self, k, q):
         super().__init__(k, q)
 
-    def update(self, u, j):
-        return (BottomEdge.update(self, u, j) + RightEdge.update(self, u, j))
+    def update(self, u, j, across=across):
+        return (BottomEdge.update(self, u, j, across) +
+                RightEdge.update(self, u, j, across))
 
 
 class Boundary(Point):
@@ -147,7 +154,7 @@ class InsideCorner(OutsideEdge):
         self.k = k
         self.q = q
 
-    def update(self, u, j):
+    def update(self, u, j, across=across):
         return 0
 
 
@@ -293,8 +300,8 @@ class HeatsinkA():
         self.total = len(self.item)
         self.width = max(20, (3 * fins) - 2)
         self.height = 37
-        self.across = (self.width / delta) + 1
-        self.down = (self.height / delta) + 1
+        self.across = int(self.width / delta) + 1
+        self.down = int(self.height / delta) + 1
 
     def __iter__(self):
         return self.item.__iter__()
