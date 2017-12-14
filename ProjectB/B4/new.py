@@ -73,14 +73,14 @@ def run_object(obj, target):
     L = ss.dia_matrix(
         (np.stack((down, values)), [-1, -across]), shape=(total, total))
 
-    u = np.full(total, 4190.)
+    u = np.full(total, 400.)
     old = 0
     iters = 0
     update = D_inv * (U + L)
 
     while abs(sum(u) - old) > target:
         old = sum(u)
-        edges = get_edges(u, obj)
+        edges = update_edges(obj, u)
         u = -update * u - (D_inv * (edges + k))
         iters += 1
     return u, iters

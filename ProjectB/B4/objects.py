@@ -302,6 +302,9 @@ class HeatsinkA():
         self.height = 37
         self.across = int(self.width / delta) + 1
         self.down = int(self.height / delta) + 1
+        self.mask = np.array(
+            [0 if isinstance(i, Outside) else 1 for i in self.item])
+
 
     def __iter__(self):
         return self.item.__iter__()
