@@ -4,6 +4,7 @@ import timeit
 import sys
 
 
+# Evaluated using Wolfram Mathematica. Erf[2]/2 to 30 d.p. (N[Erf[2]/2, 30])
 I = 0.497661132509476367081034628184
 
 
@@ -134,21 +135,23 @@ def count():
 
 def help():
     print("Generate results for use in project B2")
-    print("Options:")
+    print("Usage: python results.py <arg>")
+    print("Args:")
+    print("    -c: count. Count the number of integrand function calls.")
     print("    -f: fast. Evalute the function, time it once")
+    print("    -h: help. Display this help message")
     print("    -s: slow. Evalute the function, time it three times, do stats")
     print("        This takes around 3 minutes")
-    print("    -c: count. Count the number of integrand function calls.")
 
-
-try:
-    if sys.argv[1] == "-s":
-        slow()
-    elif sys.argv[1] == "-c":
-        count()
-    elif sys.argv[1] == "-h" or sys.argv[1] == "--help" or sys.argv[1] == "help":
+if __name__ == "__main__":
+    try:
+        if sys.argv[1] == "-s":
+            slow()
+        elif sys.argv[1] == "-c":
+            count()
+        elif sys.argv[1] == "-h" or sys.argv[1] == "--help" or sys.argv[1] == "help":
+            help()
+        else:
+            help()
+    except IndexError:
         help()
-    else:
-        help()
-except IndexError:
-    help()

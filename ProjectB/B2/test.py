@@ -40,3 +40,7 @@ class TestMonte(unittest.TestCase):
 
     def test_dist(self):
         self.assertEqual(main.dist(1), 0.5)
+
+    def test_adaptive_integration_sin(self):
+        res = main.adaptive(np.sin, 0, np.pi, 1e-6)
+        self.assertLess(abs(res - 2), 0.01)
